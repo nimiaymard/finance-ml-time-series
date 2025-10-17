@@ -1,0 +1,7 @@
+pandas>=2.0
+numpy>=1.26
+yfinance>=0.2
+statsmodels>=0.14
+scikit-learn>=1.4
+tensorflow>=2.15
+matplotlib>=3.8

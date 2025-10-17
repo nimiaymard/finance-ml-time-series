@@ -1,0 +1,12 @@
+import pandas as pd
+from src.finml.features.indicators import add_returns
+
+def test_add_returns():
+    df = pd.DataFrame({
+        "Date": pd.date_range("2024-01-01", periods=3, freq="D"),
+        "Ticker": ["AAPL"]*3,
+        "Close": [100, 101, 102]
+    })
+    res = add_returns(df)
+    assert "Return" in res.columns
+    assert res["Return"].iloc[1] == 0.01

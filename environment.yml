@@ -1,0 +1,13 @@
+name: finance-ml-time-series
+channels: [conda-forge]
+dependencies:
+  - python=3.10
+  - pandas
+  - numpy
+  - statsmodels
+  - scikit-learn
+  - pip
+  - pip:
+      - yfinance
+      - tensorflow
+      - matplotlib
