@@ -1,8 +1,11 @@
 from __future__ import annotations
 import pandas as pd
 from typing import Literal, Tuple
-from ..models.arima_model import fit_arima  # ⚠️ pas d'import LSTM ici (lazy import plus bas)
+from ..models.arima_model import fit_arima  #  pas d'import LSTM ici (lazy import plus bas)
 
+# ==============================================================
+# UTILS : assurer un index temporel propre
+# ==============================================================
 def _ensure_time_index(series: pd.Series) -> pd.Series:
     """
     Force un DatetimeIndex + une fréquence pour statsmodels.
@@ -18,17 +21,25 @@ def _ensure_time_index(series: pd.Series) -> pd.Series:
         s = s.asfreq(freq)
     return s
 
+
+# ==============================================================
+# CLASSE BACKTESTER
+# ==============================================================
 class Backtester:
     """
     Backtesting ARIMA et LSTM en walk-forward, robuste et sans import TensorFlow
     quand on ne l’utilise pas.
     """
+
     def __init__(self, train_size: float = 0.7, seq_len: int = 60, arima_order: Tuple[int,int,int]=(5,1,0)):
         self.train_size = train_size
         self.seq_len = seq_len
         self.arima_order = arima_order
 
-    # ---------- ARIMA ----------
+
+    # ----------------------------------------------------------
+    #  ARIMA
+    # ----------------------------------------------------------
     def _walk_forward_arima(self, train_df: pd.DataFrame, test_df: pd.DataFrame, target_col: str) -> pd.DataFrame:
         # Séries temporelles proprement indexées
         train_s = train_df.set_index("Date")[target_col].astype(float)
@@ -66,36 +77,70 @@ class Backtester:
         out = out.set_index("Date").join(pred_series).reset_index()
         return out
 
-    # ---------- LSTM ----------
+
+    # ----------------------------------------------------------
+    # LSTM (mode log-return)
+    # ----------------------------------------------------------
     def _walk_forward_lstm(self, train_df: pd.DataFrame, test_df: pd.DataFrame, target_col: str) -> pd.DataFrame:
         # Import "paresseux" pour ne pas initialiser TensorFlow si on est en ARIMA
         from ..models.lstm_model import train_lstm, lstm_predict
-        mdl, scaler = train_lstm(train_df[target_col], seq_len=self.seq_len, epochs=5)
-        # Historique continu : queue du train + test
-        hist = pd.concat([train_df[target_col].tail(self.seq_len), test_df[target_col]])
+
+        #  Entraîne en mode "logret" (série stationnaire)
+        model, scaler, mode = train_lstm(
+            train_df[target_col],
+            seq_len=self.seq_len,
+            epochs=40,          # augmente si besoin
+            batch_size=32,
+            mode="logret"       # apprentissage sur log-returns
+        )
+
+        # Historique : il faut seq_len+1 PRIX pour fabriquer seq_len log-returns
+        hist = pd.concat([train_df[target_col].tail(self.seq_len + 1), test_df[target_col]])
+
         preds = []
         for i in range(len(test_df)):
-            window = hist.iloc[i: i + self.seq_len]
-            pred = lstm_predict(mdl, scaler, window, seq_len=self.seq_len, steps=1)[0]
+            # Fenêtre glissante de PRIX de longueur (seq_len+1)
+            window = hist.iloc[i : i + self.seq_len + 1]
+            # Prédit 1 pas, en respectant le mode utilisé à l’entraînement
+            pred = lstm_predict(
+                model, scaler, window,
+                seq_len=self.seq_len, steps=1, mode=mode
+            )[0]
             preds.append(pred)
+
         out = test_df.copy()
         out["Prediction"] = preds
         return out
 
-    # ---------- API publique ----------
+
+    # ----------------------------------------------------------
+    # Interface publique
+    # ----------------------------------------------------------
     def walk_forward(self, df: pd.DataFrame, target_col: str, model: Literal["arima","lstm"]="arima") -> pd.DataFrame:
+        """
+        Exécute un backtest walk-forward complet.
+        """
         df = df.sort_values("Date").copy()
         df["Date"] = pd.to_datetime(df["Date"])
         n = len(df)
         split = int(n * self.train_size)
         train, test = df.iloc[:split], df.iloc[split:]
+
         if model == "arima":
             return self._walk_forward_arima(train, test, target_col)
         else:
             return self._walk_forward_lstm(train, test, target_col)
 
+
+# ==============================================================
 # Compatibilité avec l’ancien appel
-def walk_forward(df: pd.DataFrame, target_col: str, model: Literal["arima","lstm"]="arima",
-                 train_size: float = 0.7, seq_len: int = 60) -> pd.DataFrame:
+# ==============================================================
+def walk_forward(
+    df: pd.DataFrame,
+    target_col: str,
+    model: Literal["arima","lstm"]="arima",
+    train_size: float = 0.7,
+    seq_len: int = 60
+) -> pd.DataFrame:
     backtester = Backtester(train_size=train_size, seq_len=seq_len)
     return backtester.walk_forward(df, target_col, model)
