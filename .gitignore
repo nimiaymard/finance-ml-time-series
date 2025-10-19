@@ -5,16 +5,3 @@ __pycache__/
 .env
 .ipynb_checkpoints/
 
-# Data & models
-!data/raw/*
-!data/interim/*
-!data/processed/*
-!data/models/*
-!data/**/.gitkeep
-
-# Reports
-!data/reports/figures/*
-
-# Power BI
-!powerbi/datasets/*
-!powerbi/**/.gitkeep
