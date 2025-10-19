@@ -1,5 +1,6 @@
 import pandas as pd
 from src.finml.features.indicators import add_returns
+from pytest import approx
 
 def test_add_returns():
     df = pd.DataFrame({
@@ -9,4 +10,4 @@ def test_add_returns():
     })
     res = add_returns(df)
     assert "Return" in res.columns
-    assert res["Return"].iloc[1] == 0.01
+    assert res["Return"].iloc[1] == approx(0.01, rel=1e-12, abs=1e-12)
