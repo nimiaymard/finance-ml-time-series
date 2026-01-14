@@ -7,7 +7,7 @@ Projet pédagogique et reproductible pour :
 - Évaluer & backtester (MSE/RMSE, **Value-at-Risk**, **Sharpe Ratio**)
 - **Exporter des datasets** prêts pour un **rapport Power BI** (visualisation interactive)
 
-## 🚀 Démarrage rapide
+##  Démarrage rapide
 
 ```bash
 # 1) Créer l'environnement
@@ -34,7 +34,7 @@ python scripts/export_powerbi.py --tickers AAPL MSFT --target Close
 
 Le dossier `powerbi/` contient des CSV à **charger dans Power BI Desktop**. Vous pouvez créer vos pages (rendements, drawdown, VaR, Sharpe, prédictions vs réel, signaux de trading, etc.).
 
-## 📦 Structure du projet
+##  Structure du projet
 
 ```
 finance-ml-time-series/
@@ -79,7 +79,7 @@ finance-ml-time-series/
    └─ test_metrics.py
 ```
 
-## 🧰 Environnements
+## Environnements
 
 - Python ≥ 3.10
 - Voir `requirements.txt` ou `environment.yml`
@@ -90,7 +90,7 @@ finance-ml-time-series/
 - **Sharpe ratio**, **VaR** (Historique & Paramétrique)
 - Backtest **walk-forward** simple
 
-## 🧱 Architecture technique
+##  Architecture technique
 
 - `src/finml/data`: chargement des séries (yfinance) + sauvegarde CSV
 - `src/finml/features`: création des features (retours, log-returns, vol, etc.)
@@ -98,7 +98,7 @@ finance-ml-time-series/
 - `src/finml/evaluation`: métriques régression & risque (VaR, Sharpe)
 - `src/finml/backtest`: walk-forward, génération de signaux et PnL
 
-## 📈 Power BI
+## Power BI
 
 Le script `export_powerbi.py` produit des CSV dans `powerbi/datasets/` :
 - `prices.csv` : prix par ticker
@@ -107,11 +107,11 @@ Le script `export_powerbi.py` produit des CSV dans `powerbi/datasets/` :
 
 Importez ces CSV dans Power BI Desktop et créez vos visuels.
 
-## ✅ Tests
+##  Tests
 
 ```bash
 pytest -q
 ```
 
-## 📜 Licence
+##  Licence
 MIT
